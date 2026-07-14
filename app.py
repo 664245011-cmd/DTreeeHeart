@@ -1,304 +1,332 @@
-# -*- coding: utf-8 -*-
-"""
-Wine Classifier Web App - Streamlit
-"""
+# ========================================
+# 🏥 Heart Disease Prediction Web App
+# ========================================
+# รันด้วยคำสั่ง: streamlit run app.py
+# ========================================
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import os
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+from PIL import Image
 
-# ===== ตั้งค่าหน้าเว็บ =====
+# ========================================
+# 🎨 Page Configuration
+# ========================================
 st.set_page_config(
-    page_title="🍷 Wine Classifier",
-    page_icon="🍷",
+    page_title="Heart Disease Predictor",
+    page_icon="❤️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ===== Custom CSS สำหรับความสวยงาม =====
+# ========================================
+# 💅 Custom CSS
+# ========================================
 st.markdown("""
 <style>
-    /* พื้นหลังหลัก */
+    /* Main Background */
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf3 100%);
-    }
-    
-    /* Header */
-    .main-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        color: white;
+    }
+    
+    /* Title Styling */
+    .main-title {
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
-    }
-    
-    .main-header h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-    
-    .main-header p {
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-        font-size: 1.1rem;
-    }
-    
-    /* Card */
-    .card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         margin-bottom: 1rem;
     }
     
-    /* Prediction Result */
-    .prediction-box {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    .sub-title {
+        text-align: center;
+        color: white;
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Card Styling */
+    .prediction-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin: 1rem 0;
+    }
+    
+    .result-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         padding: 2rem;
         border-radius: 15px;
         color: white;
         text-align: center;
-        margin: 1rem 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     
-    .prediction-box h2 {
-        margin: 0;
-        font-size: 2rem;
+    .safe-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     
-    /* Sidebar */
-    [data-testid="stSidebar"] {
+    /* Sidebar Styling */
+    .css-1d391kg {
         background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     }
     
-    [data-testid="stSidebar"] * {
-        color: white !important;
-    }
-    
-    /* Button */
-    .stButton > button {
+    /* Button Styling */
+    .stButton>button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        padding: 0.6rem 2rem;
-        border-radius: 8px;
-        font-weight: 600;
-        width: 100%;
-        transition: all 0.3s;
+        padding: 0.5rem 2rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
     }
     
-    .stButton > button:hover {
+    .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    /* Metric Card */
+    .metric-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
 
-
-# ===== โหลดโมเดล =====
+# ========================================
+# 📊 Load Model
+# ========================================
 @st.cache_resource
 def load_model():
-    """โหลดโมเดลและ scaler จากไฟล์"""
     try:
-        model = joblib.load('model_files/dt_model.pkl')
-        scaler = joblib.load('model_files/scaler.pkl')
-        features = joblib.load('model_files/feature_names.pkl')
-        return model, scaler, features
-    except FileNotFoundError:
-        st.error("❌ ไม่พบไฟล์โมเดล กรุณาวางโฟลเดอร์ 'model_files' ในไดเรกทอรีเดียวกัน")
-        st.stop()
+        model = joblib.load('heart_disease_model.pkl')
+        return model
+    except:
+        st.error("❌ ไม่พบไฟล์โมเดล 'heart_disease_model.pkl'")
+        st.info("💡 กรุณาอัปโหลดไฟล์โมเดลที่ฝึกจาก Google Colab")
+        return None
 
+model = load_model()
 
-model, scaler, features = load_model()
+# ========================================
+# 🏠 Header Section
+# ========================================
+st.markdown('<h1 class="main-title">❤️ Heart Disease Predictor</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">ระบบทำนายความเสี่ยงโรคหัวใจด้วย Machine Learning</p>', unsafe_allow_html=True)
 
-# ชื่อคลาสไวน์
-WINE_NAMES = {
-    0: "🍷 Class 0 - ไวน์ชนิดที่ 1",
-    1: "🍷 Class 1 - ไวน์ชนิดที่ 2",
-    2: "🍷 Class 2 - ไวน์ชนิดที่ 3"
-}
+# ========================================
+# 📋 Sidebar - Input Form
+# ========================================
+st.sidebar.header("📝 กรอกข้อมูลสุขภาพ")
+st.sidebar.markdown("---")
 
-# ===== Sidebar =====
-with st.sidebar:
-    st.markdown("## 🍷 Wine Classifier")
-    st.markdown("---")
+# Input Fields
+col1, col2 = st.sidebar.columns(2)
+
+with col1:
+    age = st.number_input("🎂 อายุ (ปี)", min_value=20, max_value=100, value=50, step=1)
+    sex = st.selectbox("⚧️ เพศ", options=["หญิง", "ชาย"])
+    chest_pain = st.selectbox("💔 อาการเจ็บหน้าอก", 
+                              options=["1: Typical Angina", "2: Atypical Angina", 
+                                      "3: Non-Anginal Pain", "4: Asymptomatic"])
+    resting_bp = st.number_input("💉 ความดันโลหิตขณะพัก (mm Hg)", 
+                                  min_value=80, max_value=200, value=120, step=1)
+    cholesterol = st.number_input("🩸 คอเลสเตอรอล (mg/dl)", 
+                                   min_value=0, max_value=600, value=200, step=1)
+    fasting_bs = st.selectbox("🍬 น้ำตาลในเลือดหลังอดอาหาร > 120 mg/dl", 
+                               options=["ไม่", "ใช่"])
+
+with col2:
+    resting_ecg = st.selectbox("📈 ผล ECG ขณะพัก", 
+                                options=["0: Normal", "1: ST-T Wave Abnormality", 
+                                        "2: Left Ventricular Hypertrophy"])
+    max_hr = st.number_input("💓 อัตราการเต้นหัวใจสูงสุด", 
+                              min_value=60, max_value=220, value=150, step=1)
+    exercise_angina = st.selectbox("🏃 อาการเจ็บหน้าอกขณะออกกำลังกาย", 
+                                    options=["ไม่", "ใช่"])
+    oldpeak = st.number_input("📊 ST Depression (Oldpeak)", 
+                               min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    st_slope = st.selectbox("📉 Slope ของ ST Segment", 
+                             options=["1: Upsloping", "2: Flat", "3: Downsloping"])
+
+# Convert inputs to model format
+sex_val = 1 if sex == "ชาย" else 0
+chest_pain_val = int(chest_pain.split(':')[0])
+fasting_bs_val = 1 if fasting_bs == "ใช่" else 0
+resting_ecg_val = int(resting_ecg.split(':')[0])
+exercise_angina_val = 1 if exercise_angina == "ใช่" else 0
+st_slope_val = int(st_slope.split(':')[0])
+
+# ========================================
+# 🔮 Prediction Section
+# ========================================
+st.markdown("---")
+
+if st.button("🔮 ทำนายผล", use_container_width=True):
+    # Prepare input data
+    input_data = pd.DataFrame({
+        'Age': [age],
+        'Sex': [sex_val],
+        'ChestPainType': [chest_pain_val],
+        'RestingBP': [resting_bp],
+        'Cholesterol': [cholesterol],
+        'FastingBS': [fasting_bs_val],
+        'RestingECG': [resting_ecg_val],
+        'MaxHR': [max_hr],
+        'ExerciseAngina': [exercise_angina_val],
+        'Oldpeak': [oldpeak],
+        'ST_Slope': [st_slope_val]
+    })
+    
+    # Make prediction
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data)[0]
+    
+    # Display Results
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        if prediction == 1:
+            st.markdown(f'''
+            <div class="result-card">
+                <h1 style="font-size: 4rem; margin: 0;">⚠️</h1>
+                <h2 style="color: white; margin: 1rem 0;">มีความเสี่ยงเป็นโรคหัวใจ</h2>
+                <p style="font-size: 1.5rem; color: white;">
+                    ความน่าจะเป็น: <strong>{probability[1]:.1%}</strong>
+                </p>
+            </div>
+            ''', unsafe_allow_html=True)
+        else:
+            st.markdown(f'''
+            <div class="safe-card">
+                <h1 style="font-size: 4rem; margin: 0;">✅</h1>
+                <h2 style="color: white; margin: 1rem 0;">ไม่มีความเสี่ยงเป็นโรคหัวใจ</h2>
+                <p style="font-size: 1.5rem; color: white;">
+                    ความน่าจะเป็น: <strong>{probability[0]:.1%}</strong>
+                </p>
+            </div>
+            ''', unsafe_allow_html=True)
+    
+    # Probability Gauge
+    st.markdown("### 📊 ความน่าจะเป็นในการทำนาย")
+    
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=probability[1] * 100,
+        title={'text': "ความเสี่ยงโรคหัวใจ (%)", 'font': {'size': 24}},
+        gauge={
+            'axis': {'range': [0, 100], 'tickwidth': 1},
+            'bar': {'color': "darkblue"},
+            'steps': [
+                {'range': [0, 30], 'color': '#4facfe'},
+                {'range': [30, 70], 'color': '#ffd700'},
+                {'range': [70, 100], 'color': '#f5576c'}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': probability[1] * 100
+            }
+        }
+    ))
+    
+    fig.update_layout(height=400)
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Input Summary
+    st.markdown("### 📋 สรุปข้อมูลที่คุณกรอก")
+    
+    summary_data = {
+        'อายุ': f'{age} ปี',
+        'เพศ': sex,
+        'อาการเจ็บหน้าอก': chest_pain,
+        'ความดันโลหิต': f'{resting_bp} mm Hg',
+        'คอเลสเตอรอล': f'{cholesterol} mg/dl',
+        'น้ำตาลในเลือดสูง': fasting_bs,
+        'ผล ECG': resting_ecg,
+        'อัตราการเต้นหัวใจสูงสุด': f'{max_hr} bpm',
+        'เจ็บหน้าอกขณะออกกำลังกาย': exercise_angina,
+        'ST Depression': f'{oldpeak}',
+        'ST Slope': st_slope
+    }
+    
+    summary_df = pd.DataFrame(list(summary_data.items()), columns=['รายการ', 'ค่า'])
+    st.dataframe(summary_df, use_container_width=True, hide_index=True)
+
+# ========================================
+# ℹ️ About Section
+# ========================================
+st.markdown("---")
+st.markdown("### ℹ️ เกี่ยวกับแอปพลิเคชันนี้")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
     st.markdown("""
-    **แอปพลิเคชันจำแนกประเภทไวน์**  
-    ใช้โมเดล Decision Tree ในการวิเคราะห์คุณสมบัติทางเคมีของไวน์
-    """)
-    st.markdown("---")
-    st.markdown("### 📊 ข้อมูล")
-    st.markdown("- **Dataset:** Wine Dataset")
-    st.markdown("- **Model:** Decision Tree")
-    st.markdown("- **Features:** 13 คุณสมบัติ")
-    st.markdown("- **Classes:** 3 ประเภท")
-    st.markdown("---")
-    st.markdown("### 🛠️ เทคโนโลยี")
-    st.markdown("- Python 3.x")
-    st.markdown("- scikit-learn")
-    st.markdown("- Streamlit")
+    <div class="metric-card">
+        <h3>🤖 Model</h3>
+        <p>Decision Tree Classifier</p>
+    </div>
+    """, unsafe_allow_html=True)
 
+with col2:
+    st.markdown("""
+    <div class="metric-card">
+        <h3>📊 Features</h3>
+        <p>11 Features</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# ===== Header =====
+with col3:
+    st.markdown("""
+    <div class="metric-card">
+        <h3>🎯 Target</h3>
+        <p>Heart Disease (0/1)</p>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.markdown("""
-<div class="main-header">
-    <h1>🍷 Wine Quality Classifier</h1>
-    <p>ระบบจำแนกประเภทไวน์ด้วย Decision Tree Machine Learning</p>
+<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-top: 1rem;">
+    <h4>📌 คำอธิบาย Features:</h4>
+    <ul>
+        <li><strong>Age:</strong> อายุของผู้ป่วย</li>
+        <li><strong>Sex:</strong> เพศ (0 = หญิง, 1 = ชาย)</li>
+        <li><strong>ChestPainType:</strong> ประเภทอาการเจ็บหน้าอก</li>
+        <li><strong>RestingBP:</strong> ความดันโลหิตขณะพัก</li>
+        <li><strong>Cholesterol:</strong> ระดับคอเลสเตอรอล</li>
+        <li><strong>FastingBS:</strong> น้ำตาลในเลือดหลังอดอาหาร (> 120 mg/dl)</li>
+        <li><strong>RestingECG:</strong> ผลการตรวจ ECG ขณะพัก</li>
+        <li><strong>MaxHR:</strong> อัตราการเต้นหัวใจสูงสุดที่ đạtได้</li>
+        <li><strong>ExerciseAngina:</strong> อาการเจ็บหน้าอกขณะออกกำลังกาย</li>
+        <li><strong>Oldpeak:</strong> ST depression ที่เกิดจากการออกกำลังกาย</li>
+        <li><strong>ST_Slope:</strong> ความชันของ ST segment</li>
+    </ul>
 </div>
 """, unsafe_allow_html=True)
 
-
-# ===== Input Form =====
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.markdown("### 🔬 ป้อนข้อมูลคุณสมบัติทางเคมี")
-    
-    # สร้าง input fields สำหรับแต่ละ feature
-    input_data = {}
-    
-    # แบ่ง features เป็น 2 คอลัมน์
-    half = len(features) // 2 + 1
-    left_features = features[:half]
-    right_features = features[half:]
-    
-    col_left, col_right = st.columns(2)
-    
-    # ค่าขอบเขตสำหรับแต่ละ feature (จากข้อมูล Wine)
-    feature_ranges = {
-        'alcohol': (10.0, 15.0, 12.5),
-        'malic_acid': (0.5, 5.0, 2.5),
-        'ash': (1.3, 3.5, 2.3),
-        'alcalinity_of_ash': (10.0, 30.0, 19.0),
-        'magnesium': (70.0, 160.0, 100.0),
-        'total_phenols': (0.8, 4.0, 2.3),
-        'flavanoids': (0.2, 5.0, 2.0),
-        'nonflavanoid_phenols': (0.1, 1.0, 0.4),
-        'proanthocyanins': (0.4, 4.0, 1.6),
-        'color_intensity': (1.5, 17.0, 5.0),
-        'hue': (0.3, 1.7, 0.95),
-        'od280/od315_of_diluted_wines': (1.2, 4.0, 2.6),
-        'proline': (250.0, 1700.0, 750.0)
-    }
-    
-    with col_left:
-        for feat in left_features:
-            min_v, max_v, default = feature_ranges.get(feat, (0, 10, 5))
-            input_data[feat] = st.number_input(
-                feat.replace('_', ' ').title(),
-                min_value=float(min_v),
-                max_value=float(max_v),
-                value=float(default),
-                step=0.1
-            )
-    
-    with col_right:
-        for feat in right_features:
-            min_v, max_v, default = feature_ranges.get(feat, (0, 10, 5))
-            input_data[feat] = st.number_input(
-                feat.replace('_', ' ').title(),
-                min_value=float(min_v),
-                max_value=float(max_v),
-                value=float(default),
-                step=0.1
-            )
-    
-    # ปุ่มทำนาย
-    st.markdown("<br>", unsafe_allow_html=True)
-    predict_button = st.button("🔮 ทำนายผล", use_container_width=True)
-
-
-with col2:
-    st.markdown("### 📋 ข้อมูลที่ป้อน")
-    
-    # แสดงข้อมูลที่ป้อนในรูปแบบ DataFrame
-    input_df = pd.DataFrame([input_data])
-    st.dataframe(input_df.T.rename(columns={0: 'ค่า'}), use_container_width=True)
-    
-    # ปุ่ม Reset
-    if st.button("🔄 รีเซ็ตค่า", use_container_width=True):
-        st.rerun()
-
-
-# ===== Prediction =====
-if predict_button:
-    with st.spinner("🤖 กำลังวิเคราะห์ข้อมูล..."):
-        # Transform ข้อมูลด้วย scaler เดียวกันกับตอนฝึก
-        input_array = np.array([list(input_data.values())])
-        input_scaled = scaler.transform(input_array)
-        
-        # ทำนาย
-        prediction = model.predict(input_scaled)[0]
-        probabilities = model.predict_proba(input_scaled)[0]
-        
-        st.markdown("---")
-        
-        # แสดงผลการทำนาย
-        st.markdown(f"""
-        <div class="prediction-box">
-            <h2>{WINE_NAMES[prediction]}</h2>
-            <p style="margin-top: 0.5rem; font-size: 1.2rem;">
-                ความมั่นใจ: {probabilities[prediction]*100:.2f}%
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # แสดงความน่าจะเป็นของแต่ละคลาส
-        st.markdown("### 📊 ความน่าจะเป็นของแต่ละคลาส")
-        
-        prob_df = pd.DataFrame({
-            'คลาส': [WINE_NAMES[i] for i in range(3)],
-            'ความน่าจะเป็น (%)': [p * 100 for p in probabilities]
-        })
-        
-        col_a, col_b = st.columns([1, 2])
-        
-        with col_a:
-            st.dataframe(prob_df, use_container_width=True, hide_index=True)
-        
-        with col_b:
-            # Bar chart แสดงความน่าจะเป็น
-            chart_df = pd.DataFrame(
-                probabilities * 100,
-                index=['Class 0', 'Class 1', 'Class 2'],
-                columns=['ความน่าจะเป็น (%)']
-            )
-            st.bar_chart(chart_df, color='#667eea')
-        
-        # Feature Importance
-        st.markdown("---")
-        st.markdown("### 🎯 Feature Importance")
-        
-        importance_df = pd.DataFrame({
-            'Feature': features,
-            'Importance': model.feature_importances_
-        }).sort_values('Importance', ascending=True)
-        
-        # กรองเฉพาะ features ที่มี importance > 0
-        importance_df = importance_df[importance_df['Importance'] > 0]
-        
-        if len(importance_df) > 0:
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.barh(importance_df['Feature'], importance_df['Importance'], 
-                    color='#667eea', edgecolor='white')
-            ax.set_xlabel('Importance')
-            ax.set_title('Feature Importance จากโมเดล Decision Tree')
-            st.pyplot(fig)
-        else:
-            st.info("โมเดลไม่ได้ใช้ features ใดๆ ในการตัดสินใจ")
-
-
-# ===== Footer =====
+# ========================================
+# 📝 Footer
+# ========================================
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: #666; padding: 1rem;'>
-    <p>🎓 พัฒนาเพื่อการศึกษา | Decision Tree Classifier with Streamlit</p>
+<div style="text-align: center; color: white; padding: 1rem;">
+    <p>⚠️ <strong>คำเตือน:</strong> แอปพลิเคชันนี้ใช้เพื่อการศึกษาเท่านั้น ไม่สามารถใช้แทนการวินิจฉัยของแพทย์ได้</p>
+    <p>© 2026 Heart Disease Prediction App | Powered by Machine Learning</p>
 </div>
 """, unsafe_allow_html=True)
