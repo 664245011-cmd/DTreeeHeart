@@ -8,4 +8,3 @@ streamlit_lottie
 scikit-learn
 joblib
 Pillow
-pyngrok
